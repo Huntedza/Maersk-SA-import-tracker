@@ -1,0 +1,73 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+/test-results
+/playwright-report
+
+# Production
+/build
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+ehthumbs.db
+
+# SA Inbound Tracker specific files
+db.json
+*.png
+*.jpg
+*.jpeg
+*.gif
+debug-*.js
+test-*.js
+analyze-*.js
+check-*.js
+extract-*.js
+simple-*.js
+quick-*.js
+visual-*.js
+final-*.js
+detailed-*.js
+*-test.png
+*-debug.png
+*-verification.png
+response.json
+"Saecs resnponse 24weeks.json"
+npm-install.log
+proxy-server.js
+nul
+
+# Backup files
+*.backup.js
+*.bak
+*~
+
+# Temporary files
+*.tmp
+*.temp

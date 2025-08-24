@@ -1,0 +1,62 @@
+{
+  "name": "sa-inbound-tracker",
+  "version": "1.0.0",
+  "description": "South Africa focused vessel schedule tracker for import/export operations",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.11.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^4.21.2",
+    "http-proxy-middleware": "^2.0.9",
+    "idb": "^7.1.1",
+    "lowdb": "^7.0.1",
+    "lucide-react": "^0.294.0",
+    "node-fetch": "^2.7.0",
+    "playwright": "^1.55.0",
+    "puppeteer": "^24.17.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "server": "node server.js",
+    "dev": "concurrently \"npm start\" \"npm run server\"",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "test:backend": "node run-backend-test.js",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "concurrently": "^9.2.0"
+  }
+}

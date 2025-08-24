@@ -1,0 +1,793 @@
+openapi: 3.0.0
+info:
+  title: Vessel Schedules API
+  description: |
+    Retrieves Schedules for A.P. Moller-Maersk A/S Vessels
+    
+    # Overview
+    This service returns Maersk Vessel Schedules by active ports and/or active vessels.
+  
+    # Who can get access?
+    All registered users of the Maersk Developer Portal can get access to the API.
+    
+    # Getting started
+    After creating an account, **<a href="https://developer.maersk.com/login" target="_blank" style="font-weight: bold;"><u>login</u></a>** and create an App to enable this API product for your Consumer Key. For step-by-step instructions, please refer to our **<a href="https://developer.maersk.com/support/getting-started-api" target="_blank" style="font-weight: bold;"><u>Getting Started Guide</u></a>**.
+    
+    # How many calls can I make?
+    Traffic and spike arrest limits are configured at the consumer key level for each API Product as detailed in the table below. If these limits are exceeded, the request is rejected with a 429 Too Many Requests HTTP status code.
+    
+    | Quota per Consumer Key | Traffic Surge Rate Limit per Consumer Key |
+    |------------------------|-------------------------------------------|
+    | 20,000 calls per hour  | 10 calls per second                       |
+    
+    # Release Notes
+    | Version | Date | Notes |
+    |---------|------|-------|
+    | 1.0.0   |      | Initial Draft | 
+    | 1.1.0   | 2021-12-14 | Added carrierServiceName to the output |
+    | 1.1.1   | 2022-04-01 | fixed regex for cityName and examples |
+    | 1.2.0   | 2023-11-22 | extends dateRange to future 180 days; updated the regex for cityName and UNRegionCode; support ACT eventClassifierCode |   
+    
+  version: 1.2.0
+servers:
+  - url: https://api.maersk.com/schedules
+    description: Production Environment
+  - url: https://api-stage.maersk.com/schedules
+    description: Pre-Production Environment
+tags:
+  - name: Ports
+    description: Ports Operations
+  - name: Vessels
+    description: Vessels Operations
+  - name: Schedules
+    description: Schedules Operations
+security:
+  - ApiKeyHeader: []
+paths:
+  /active-ports:
+    get:
+      tags:
+        - Ports
+      summary: Lists Active Ports
+      description: Retrieves ports called by A.P. Moller-Maersk A/S Vessels
+      parameters:
+        - name: countryCodes
+          in: query
+          description: >
+            Two-letter country code defined in the ISO 3166-1 standard published
+            by the International Organization for Standardization (ISO)\
+
+            <https://www.iso.org/iso-3166-country-codes.html>
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            minItems: 1
+            maxItems: 50
+            items:
+              type: string
+              example: US
+              pattern: ^[a-zA-Z]{2}$
+          examples:
+            oneCountryCode:
+              summary: Example of a single countryCode
+              value:
+                - US
+            multipleCountryCodes:
+              summary: Example of multiple countryCodes
+              value:
+                - US
+                - CN
+                - DK
+        - $ref: '#/components/parameters/CarrierCodes'
+      responses:
+        '200':
+          description: >-
+            Returns a list of active ports of Load or Discharge called by A.P.
+            Moller-Maersk A/S vessels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Port'
+            application/stream+json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Port'
+            text/event-stream:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Port'
+        '400':
+          description: >-
+            Bad request; the request is unacceptable often due to a missing or
+            invalid parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: The client cannot be authenticated by the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: The client does not have permissions to access this endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: The requested resource cannot be found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      deprecated: false
+  /active-vessels:
+    get:
+      tags:
+        - Vessels
+      summary: Lists Active Vessels
+      description: Retrieves active vessels operated by A.P. Moller-Maersk A/S
+      responses:
+        '200':
+          description: Returns a list of active vessels operated by A.P. Moller-Maersk A/S
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vessel'
+            application/stream+json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vessel'
+            text/event-stream:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vessel'
+        '400':
+          description: >-
+            Bad request; the request is unacceptable often due to a missing or
+            invalid parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: The client cannot be authenticated by the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: The client does not have permissions to access this endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: The requested resource cannot be found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      deprecated: false
+  /port-calls:
+    get:
+      tags:
+        - Schedules
+      summary: Lists Schedules by Port
+      description: >
+        Returns Vessel Schedules for a specific port and period of time, this
+        endpoint requires **ONE OF** the following parameter combinations to be
+        used to identify a port location
+
+        1. `countryCode` (mandatory) + `cityName` (mandatory) + UNLocationCode
+        (optional) + UNRegionCode (optional)
+
+        2. `carrierGeoID` (mandatory)
+
+
+        Note:  When more than one port location is retrieved by the query
+        parameters provided by the consumer, a list of valid port locations
+        against 409 HTTP code will be returned that can be used to query for
+        available schedules.
+      parameters:
+        - name: countryCode
+          in: query
+          description: >
+            Two-letter country code defined in the ISO 3166-1 standard published
+            by the International Organization for Standardization (ISO)\
+
+            <https://www.iso.org/iso-3166-country-codes.html>
+          required: false
+          schema:
+            type: string
+            pattern: ^[a-zA-Z]{2}$
+            example: US
+        - name: cityName
+          in: query
+          description: |
+            Name of the City for the Port of Load or Discharge
+          required: false
+          schema:
+            type: string
+            pattern: >-
+              ^([a-zA-Z\[\]\(\)ɏ-€]+(?:. |-|
+              |'|’|\|))*[a-zA-Z\[\]\(\)ɏ-€]{0,50}$
+            example: Houston
+        - name: UNLocationCode
+          in: query
+          description: >
+            United Nations Code for the Port of Load/Discharge for Trade and
+            Transport Locations (UN/LOCODE) as defined by the UNECE\
+               <https://www.unece.org/cefact/locode/welcome.html>
+          required: false
+          schema:
+            type: string
+            pattern: ^[a-zA-Z]{5}$
+            example: USHOU
+        - name: UNRegionCode
+          in: query
+          description: >
+            Two-letter Region Code of the State or Country Subdivision as
+            defined by the UNECE\
+
+            <http://www.unece.org/cefact/locode/subdivisions.html>
+          required: false
+          schema:
+            type: string
+            pattern: '[a-zA-Z0-9]{2,3}'
+            example: TX
+        - name: carrierGeoID
+          in: query
+          description: >
+            Internal GEO ID for the Port of Load or Discharge (City) as defined
+            by A.P. Moller-Maersk A/S
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9a-zA-Z]{13}$
+            nullable: true
+          examples:
+            emptyValue:
+              value: null
+            exampleValue:
+              value: 183AKT65YAHRZ
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/DateRange'
+        - $ref: '#/components/parameters/CarrierCodes'
+      responses:
+        '200':
+          description: |
+            Returns a list of schedules by port
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortSchedules'
+            application/stream+json:
+              schema:
+                $ref: '#/components/schemas/PortSchedules'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/PortSchedules'
+        '400':
+          description: >-
+            Bad request; the request is unacceptable often due to a missing or
+            invalid parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: The client cannot be authenticated by the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: The client does not have permissions to access this endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: The requested resource cannot be found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: >-
+            Conflict; more than one port location is retrieved by the query
+            parameters provided by the consumer, a list of valid port locations
+            will be returned that can be used to query for available port
+            schedules.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailablePorts'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      deprecated: false
+  /vessel-schedules:
+    get:
+      tags:
+        - Schedules
+      summary: Lists Schedules by Vessel
+      description: >
+        Returns a Vessel Schedule for a specific vessel and period of time. 
+        This endpoint requires **ONE OF** the following query parameters:
+
+        * `vesselIMONumber`
+
+        * `carrierVesselCode`
+      parameters:
+        - name: vesselIMONumber
+          in: query
+          description: >
+            The unique 7-digit number assigned to a vessel by the International
+            Maritime Organization (IMO)\
+
+            <http://www.imo.org/en/Pages/Default.aspx>
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]{7}$
+            example: '9332999'
+        - name: carrierVesselCode
+          in: query
+          description: >
+            The unique 3-character code assigned by A.P. Moller-Maersk A/S to a
+            vessel for internal use
+          required: false
+          schema:
+            type: string
+            pattern: ^[a-zA-Z0-9]{3}$
+            nullable: true
+          examples:
+            emptyValue:
+              value: null
+            exampleValue:
+              value: Q4F
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/DateRange'
+        - $ref: '#/components/parameters/CarrierCodes'
+      responses:
+        '200':
+          description: Returns a list of schedules by vessel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VesselSchedules'
+            application/stream+json:
+              schema:
+                $ref: '#/components/schemas/VesselSchedules'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/VesselSchedules'
+        '400':
+          description: >-
+            Bad request; the request is unacceptable often due to a missing or
+            invalid parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: The client cannot be authenticated by the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: The client does not have permission to access this endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: The requested resource cannot be found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      deprecated: false
+components:
+  securitySchemes:
+    ApiKeyHeader:
+      type: apiKey
+      name: Consumer-Key
+      in: header
+      description: >-
+        The Consumer Key issued for your registered application must be provided
+        with every request
+  parameters:
+    CarrierCodes:
+      name: carrierCodes
+      in: query
+      description: >
+        The A.P. Moller Maersk brand code based on the National Motor Freight
+        Traffic Association (NMFTA) - Standard Carrier Alpha Codes (SCAC) 2019:\
+
+        <http://www.nmfta.org/pages/scac>
+
+        * MAEU - Maersk A/S
+
+        * SEAU - Maersk A/S* trading as Sealand Americas
+
+        * SEJJ - Sealand Europe A/S
+
+        * MCPU - Sealand Maersk Asia Pte. Ltd.
+
+        * MAEI - Maersk Line Limited
+      required: true
+      style: form
+      explode: false
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 6
+        items:
+          type: string
+          enum:
+            - MAEU
+            - SEAU
+            - SEJJ
+            - MCPU
+            - MAEI
+      example:
+        - MAEU
+    StartDate:
+      name: startDate
+      in: query
+      description: >
+        The start date of the period for which schedule information is requested
+        in ISO 8601 Date format. The allowed startDate is 90 days before the
+        current date and 180 days after the current date. If not provided, the
+        current date is used by default. \
+
+        <https://www.iso.org/iso-8601-date-and-time-format.html>
+      required: false
+      schema:
+        type: string
+        format: date
+        pattern: ^\d{4}-\d{2}-\d{2}$
+        nullable: true
+      examples:
+        emptyValue:
+          value: null
+        exampleValue:
+          value: '2020-06-01'
+    DateRange:
+      name: dateRange
+      in: query
+      description: >
+        The time period for which schedule information is requested . The
+        duration is populated in ISO 8601 Duration format and should not exceed
+        180 days. If not provided, P4W is used by default.\
+
+        <https://www.iso.org/iso-8601-date-and-time-format.html>
+      required: false
+      schema:
+        type: string
+        format: ISO8601
+        default: P4W
+  schemas:
+    Vessel:
+      type: object
+      properties:
+        vesselIMONumber:
+          type: string
+          description: >
+            The unique 7-digit number assigned to a vessel by the International
+            Maritime Organization (IMO)
+             http://www.imo.org/en/Pages/Default.aspx
+          example: '9332999'
+        carrierVesselCode:
+          type: string
+          description: >-
+            The unique 3-character code assigned by A.P. Moller-Maersk A/S to a
+            vessel for internal use
+          example: 7KC
+        vesselName:
+          type: string
+          description: The name of the vessel identified by the IMO number
+          example: MAERSK DENVER
+        vesselFlagCode:
+          type: string
+          description: >-
+            The ISO 3166 two-letter country code for the flag of the nation
+            under whose laws the vessel is registered.
+          example: US
+        vesselCallSign:
+          type: string
+          description: >-
+            A unique alphanumeric identity that belongs to the vessel and is
+            assigned by the International Telecommunication Union (ITU).  It
+            consists of a three-letter alphanumeric prefix that indicates
+            nationality, followed by one to four characters to identify the
+            individual vessel. The Vessel Call Sign changes whenever a vessel
+            changes its flag.
+          example: WMDQ
+    Port:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          description: >
+            Two-letter country code defined in the ISO 3166-1 standard published
+            by the International Organization for Standardization (ISO)
+          example: US
+        countryName:
+          type: string
+          description: >
+            Name of the Country as defined in the ISO 3166-1 standard published
+            by the International Organization for Standardization (ISO)
+          example: United States
+        UNLocationCode:
+          type: string
+          description: >
+            United Nations Code for Trade and Transport Locations (UN/LOCODE) as
+            defined by the UNECE
+
+            https://www.unece.org/cefact/locode/welcome.html
+          example: USHOU
+        cityName:
+          type: string
+          description: |
+            Name of the City for the Port of Load or Discharge
+          example: Houston
+        portName:
+          type: string
+          description: |
+            Name of the Port
+          example: Houston
+        UNRegionCode:
+          type: string
+          description: >
+            Two-letter Region Code of the State or Country Subdivision as
+            defined by the UNECE\
+
+            <http://www.unece.org/cefact/locode/subdivisions.html>
+          example: FL
+        carrierCityGeoID:
+          type: string
+          description: >
+            Internal GEO ID for the Port of Load or Discharge (City) as defined
+            by A.P. Moller-Maersk A/S
+          example: 183AKT65YAHRZ
+    Facility:
+      type: object
+      properties:
+        locationType:
+          type: string
+          description: type of location
+          example: TERMINAL
+        locationName:
+          type: string
+          description: Name of the Location
+          example: BAY PORT CONTAINER TERMINAL
+        carrierTerminalCode:
+          type: string
+          description: The internal terminal code as defined by A.P. Moller-Maersk A/S
+          example: USHOUBP
+        carrierTerminalGeoID:
+          type: string
+          description: >-
+            Internal GEO ID for the Terminal as defined by A.P. Moller-Maersk
+            A/S
+          example: 3P6EHKCWQCVNP
+    Service:
+      type: object
+      properties:
+        carrierVoyageNumber:
+          type: string
+          description: The voyage number assigned by the vessel operator
+          example: 010E
+        carrierServiceCode:
+          type: string
+          description: >-
+            The internal A.P. Moller-Maersk A/S service code for which the
+            schedule details are published.
+          example: '600'
+        carrierServiceName:
+          type: string
+          description: >-
+            The internal A.P. Moller-Maersk A/S service name for which the
+            schedule details are published.
+          example: NORTH ATLANTIC EXPRESS
+    CallSchedule:
+      type: object
+      properties:
+        transportEventTypeCode:
+          type: string
+          description: >-
+            The DCSA unique identifier for the type of vessel schedule event
+            (ARRI for arrival or DEPA for departure).
+          example: ARRI
+        eventClassifierCode:
+          type: string
+          description: >
+            The DCSA event classifier code, either PLN for Planned, ACT for
+            Actual or EST for Estimated.  In case of a port omission, the field
+            is populated as EST.\
+
+            This version of the API will classify events as EST Estimated
+            or ACT Actual.
+          example: EST
+        classifierDateTime:
+          type: string
+          format: date-time
+          description: >-
+            The local date and time where the event is scheduled to take place
+            in ISO 8601 format. In case of a port omission, the field is
+            populated with the previously shared value by default.
+          example: '2020-03-20T10:00:00'
+    VesselCall:
+      type: object
+      properties:
+        facility:
+          allOf:
+            - $ref: '#/components/schemas/Port'
+            - $ref: '#/components/schemas/Facility'
+        transport:
+          type: object
+          properties:
+            inboundService:
+              $ref: '#/components/schemas/Service'
+            outboundService:
+              $ref: '#/components/schemas/Service'
+        callSchedules:
+          type: array
+          minItems: 2
+          maxItems: 6
+          items:
+            $ref: '#/components/schemas/CallSchedule'
+    FacilityCall:
+      type: object
+      properties:
+        transport:
+          type: object
+          properties:
+            vessel:
+              $ref: '#/components/schemas/Vessel'
+            inboundService:
+              $ref: '#/components/schemas/Service'
+            outboundService:
+              $ref: '#/components/schemas/Service'
+        callSchedules:
+          type: array
+          minItems: 2
+          maxItems: 6
+          items:
+            $ref: '#/components/schemas/CallSchedule'
+    PortCall:
+      type: object
+      properties:
+        facility:
+          $ref: '#/components/schemas/Facility'
+        facilityCalls:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacilityCall'
+    VesselSchedules:
+      type: object
+      description: The schedules by Vessel with all associated data elements
+      properties:
+        vessel:
+          $ref: '#/components/schemas/Vessel'
+        vesselCalls:
+          type: array
+          items:
+            $ref: '#/components/schemas/VesselCall'
+    PortSchedules:
+      type: object
+      description: The schedules by port with all associated data elements
+      properties:
+        port:
+          $ref: '#/components/schemas/Port'
+        portCalls:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortCall'
+    AvailablePorts:
+      type: object
+      description: >-
+        The list of valid port locations retrieved by the query parameters
+        provided by the consumer that can be used to query for available
+        schedules.
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: message and suggestion for multiple ports found case
+          example: >-
+            more than one port location is retrieved by the input query
+            parameters, please check the available locations list and resend the
+            API request with the corresponding carrierCityGeoID
+        ports:
+          type: array
+          items:
+            $ref: '#/components/schemas/Port'
+    ApiError:
+      type: object
+      required:
+        - method
+        - requestUri
+        - status
+        - timestamp
+        - message
+        - debugMessage
+      properties:
+        method:
+          type: string
+          description: The request method type e.g. GET, POST.
+        requestUri:
+          type: string
+          description: The request URI.
+        status:
+          type: string
+          description: The textual representation of the response status.
+        timestamp:
+          type: string
+          description: The date and time (dd-MM-yyyy hh:mm:ss) the error occured.
+        message:
+          type: string
+          description: High level error message.
+        debugMessage:
+          type: string
+          description: Detailed error message.
+        subErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiValidationError'
+          description: The list of invalid fields in the request.
+    ApiValidationError:
+      type: object
+      required:
+        - field
+        - rejectedValue
+        - message
+      properties:
+        field:
+          type: string
+          description: The field that has failed validation.
+        rejectedValue:
+          type: string
+          description: The value that has failed validation.
+        message:
+          type: string
+          description: The reason and advice for failed validation.

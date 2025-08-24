@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx playwright:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run test:e2e:headed:*)",
+      "Bash(node:*)",
+      "Bash(timeout:*)",
+      "Bash(del debug-santa-clara-pod-dates.js)",
+      "Bash(rm:*)",
+      "Bash(touch:*)",
+      "Bash(chmod:*)",
+      "Bash(./cleanup-for-github.sh:*)",
+      "WebFetch(domain:msk.ocs.za.net)",
+      "Bash(grep:*)",
+      "Bash(jq:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
