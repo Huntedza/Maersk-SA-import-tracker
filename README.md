@@ -42,6 +42,7 @@ A production-ready vessel schedule tracking system for South African imports, fe
 - **🏢 ZADUR (Durban)**: Primary container hub - KwaZulu-Natal
 - **🌊 ZACPT (Cape Town)**: Western Cape gateway port  
 - **⚓ ZAPLZ (Port Elizabeth)**: Eastern Cape container terminal
+- **🚢 ZAZBA (Port Coega)**: Eastern Cape automotive and container port
 
 ## 🚀 Quick Start
 

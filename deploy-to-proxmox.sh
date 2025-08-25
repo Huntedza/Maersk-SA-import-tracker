@@ -146,8 +146,8 @@ install_nginx() {
 
 # Install additional tools
 install_tools() {
-    print_step "Installing additional tools (git, curl, unzip)"
-    apt install -y git curl unzip ufw
+    print_step "Installing additional tools (git, curl, unzip, rsync)"
+    apt install -y git curl unzip ufw rsync
     print_success "Additional tools installed"
 }
 
@@ -155,29 +155,40 @@ install_tools() {
 setup_app_directory() {
     print_step "Setting up application directory"
     
+    # Store the original directory where script was run from
+    ORIGINAL_DIR="$(pwd)"
+    
     # Create directory
     mkdir -p "$APP_DIR"
-    cd "$APP_DIR"
     
-    # If this script is being run from the project directory, copy files
-    if [ -f "package.json" ]; then
-        print_step "Copying application files from current directory"
-        cp -r . "$APP_DIR/"
+    # Check if we're already in the target directory
+    if [ "$ORIGINAL_DIR" = "$APP_DIR" ]; then
+        print_success "Already in target directory: $APP_DIR"
     else
-        print_warning "Application files not found in current directory"
-        print_warning "You'll need to upload your SA Tracker files to $APP_DIR"
-        echo ""
-        echo "To upload files, you can:"
-        echo "1. Use scp: scp -r sa-inbound-tracker/* root@your-lxc-ip:$APP_DIR/"
-        echo "2. Use git: git clone your-repo $APP_DIR"
-        echo "3. Use rsync: rsync -av sa-inbound-tracker/ root@your-lxc-ip:$APP_DIR/"
-        echo ""
-        read -p "Continue anyway? (y/n): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            exit 1
+        # If this script is being run from the project directory, copy files
+        if [ -f "$ORIGINAL_DIR/package.json" ]; then
+            print_step "Copying application files from $ORIGINAL_DIR to $APP_DIR"
+            # Use rsync to avoid copying to same directory issues
+            rsync -av --exclude='node_modules' --exclude='.git' "$ORIGINAL_DIR/" "$APP_DIR/"
+        else
+            print_warning "Application files not found in current directory"
+            print_warning "You'll need to upload your SA Tracker files to $APP_DIR"
+            echo ""
+            echo "To upload files, you can:"
+            echo "1. Use scp: scp -r sa-inbound-tracker/* root@your-lxc-ip:$APP_DIR/"
+            echo "2. Use git: git clone your-repo $APP_DIR"
+            echo "3. Use rsync: rsync -av sa-inbound-tracker/ root@your-lxc-ip:$APP_DIR/"
+            echo ""
+            read -p "Continue anyway? (y/n): " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                exit 1
+            fi
         fi
     fi
+    
+    # Change to app directory
+    cd "$APP_DIR"
     
     # Set proper ownership
     chown -R www-data:www-data "$APP_DIR"
