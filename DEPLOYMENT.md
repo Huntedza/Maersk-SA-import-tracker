@@ -16,17 +16,26 @@ The SA Inbound Tracker is a production-ready vessel tracking system with:
 **One-command deployment on your Debian LXC:**
 
 ```bash
-# 1. Upload your project files to the LXC container
-scp -r sa-inbound-tracker/ root@your-lxc-ip:/tmp/
+# 1. Clone from GitHub or upload project files to the LXC container
+git clone https://github.com/Huntedza/Maersk-SA-import-tracker.git /opt/Maersk-SA-import-tracker
+# OR: scp -r sa-inbound-tracker/ root@your-lxc-ip:/opt/
 
 # 2. SSH into your LXC container
 ssh root@your-lxc-ip
 
 # 3. Navigate to project and run deployment script
-cd /tmp/sa-inbound-tracker
+cd /opt/Maersk-SA-import-tracker
 chmod +x deploy-to-proxmox.sh
-./deploy-to-proxmox.sh
+sudo ./deploy-to-proxmox.sh
 ```
+
+### 🔧 **Important: API Configuration**
+
+The application is now configured for production deployment:
+- ✅ **API URL**: Uses `/api` (relative path) instead of hardcoded localhost
+- ✅ **Environment Variables**: Configured via `.env` file  
+- ✅ **Nginx Proxy**: Routes `/api` requests to Node.js backend on port 3002
+- ✅ **Cross-domain Access**: Works from any domain without CORS issues
 
 ## 📋 What the Script Does
 

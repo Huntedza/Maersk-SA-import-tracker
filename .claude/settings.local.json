@@ -21,6 +21,9 @@
       "Bash(git push:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "F:\\var\\www"
+    ]
   }
 }

@@ -1,6 +1,6 @@
 // DatabaseService.js - Handles communication with the local backend server
 
-const API_BASE_URL = 'http://localhost:3002/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 
 // Save vessel schedules to the database via the server
 const saveSchedules = async (scheduleData) => {
