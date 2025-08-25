@@ -25,10 +25,10 @@ const SAImportScheduleView = () => {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('color-theme');
+      if (saved === 'dark') return true;
+      if (saved === 'light') return false;
       // Default to dark mode if no preference is saved
-      return saved === 'dark' || 
-        (!saved && true) || // Default to dark mode
-        (saved === 'light' ? false : window.matchMedia('(prefers-color-scheme: dark)').matches);
+      return true;
     }
     return true; // Default to dark mode
   });
@@ -872,6 +872,7 @@ const SAImportScheduleView = () => {
                 onClick={() => setIsDark(!isDark)}
                 className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 aria-label="Toggle dark mode"
+                data-testid="dark-mode-toggle"
               >
                 {isDark ? (
                   <Sun className="h-5 w-5 text-yellow-500" />
@@ -969,10 +970,10 @@ const SAImportScheduleView = () => {
           )}
 
           {/* Vessel count summary */}
-          {primaryVessels.length > 0 && (
+          {sortedVessels.length > 0 && (
             <div className="text-center py-4">
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                Showing {primaryVessels.length} vessels
+                Showing {sortedVessels.length} vessels
                 {showDelayedOnly && (
                   <span className="ml-2 px-2 py-1 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full text-xs">
                     <AlertTriangle className="h-3 w-3 inline mr-1" />
