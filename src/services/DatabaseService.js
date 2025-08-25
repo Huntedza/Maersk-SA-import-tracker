@@ -1,6 +1,30 @@
 // DatabaseService.js - Handles communication with the local backend server
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+// Determine API URL based on environment
+const getApiBaseUrl = () => {
+  // If explicitly set in environment, use that
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // For development (localhost), use full URL with port
+  if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+    return 'http://localhost:3002/api';
+  }
+  
+  // For production, use relative path
+  return '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+// Debug logging to help with environment issues
+console.log('🔧 DatabaseService Configuration:', {
+  NODE_ENV: process.env.NODE_ENV,
+  hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
+  REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+  resolved_API_BASE_URL: API_BASE_URL
+});
 
 // Save vessel schedules to the database via the server
 const saveSchedules = async (scheduleData) => {
